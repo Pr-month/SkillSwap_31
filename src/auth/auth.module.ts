@@ -1,27 +1,23 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { JwtModule, JwtModuleOptions, JwtSignOptions } from '@nestjs/jwt';
+import { ConfigModule } from '@nestjs/config';
+import { JwtModule, JwtModuleOptions } from '@nestjs/jwt';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
+import { jwtConfig, JwtConfig } from '../config/jwt.config';
 
 @Module({
   imports: [
-    ConfigModule,
+    ConfigModule.forFeature(jwtConfig),
     JwtModule.registerAsync({
       imports: [ConfigModule],
-      inject: [ConfigService],
-      useFactory: (configService: ConfigService): JwtModuleOptions => {
-        const secret = configService.get<string>('JWT_SECRET', 'superSecretKey');
-        const rawExpires = configService.get<string>('JWT_EXPIRES_IN');
-        const expiresIn = (rawExpires ?? '1h') as JwtSignOptions['expiresIn'];
-        const signOptions: JwtSignOptions = {
-          expiresIn,
-        };
-        return {
-          secret,
-          signOptions,
-        };
-      },
+      inject: [jwtConfig.KEY],
+      useFactory: (config: JwtConfig): JwtModuleOptions => ({
+        global: true,
+        secret: config.secret,
+        signOptions: {
+          expiresIn: Number(config.expiresIn),
+        },
+      }),
     }),
   ],
   controllers: [AuthController],
