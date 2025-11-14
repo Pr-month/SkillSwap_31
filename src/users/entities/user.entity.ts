@@ -1,6 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToMany, JoinTable } from 'typeorm';
-import { Skill } from '../../skills/entities/skill.entity';
-import { Category } from '../../categories/entities/category.entity';
+// import { Skill } from '../../skills/entities/skill.entity';
+// import { Category } from '../../categories/entities/category.entity';
 
 @Entity()
 export class User {
@@ -31,24 +31,24 @@ export class User {
     @Column({ nullable: true })
     avatar?: string;
 
-    @OneToMany(() => Skill, skill => skill.owner)
-    skills: Skill[];
+    // @OneToMany(() => Skill, skill => skill.owner)
+    // skills: Skill[];
 
-    @ManyToMany(() => Category, { nullable: true })
-    @JoinTable({
-        name: 'user_want_to_learn',
-        joinColumn: { name: 'userId', referencedColumnName: 'id' },
-        inverseJoinColumn: { name: 'categoryId', referencedColumnName: 'id' },
-    })
-    wantToLearn: Category[];
+    // @ManyToMany(() => Category, { nullable: true })
+    // @JoinTable({
+    //     name: 'user_want_to_learn',
+    //     joinColumn: { name: 'userId', referencedColumnName: 'id' },
+    //     inverseJoinColumn: { name: 'categoryId', referencedColumnName: 'id' },
+    // })
+    // wantToLearn: Category[];
 
-    @ManyToMany(() => Skill, skill => skill.favoritedBy)
-    @JoinTable({
-        name: 'user_favorite_skills',
-        joinColumn: { name: 'userId', referencedColumnName: 'id' },
-        inverseJoinColumn: { name: 'skillId', referencedColumnName: 'id' },
-    })
-    favoriteSkills: Skill[];
+    // @ManyToMany(() => Skill, skill => skill.favoritedBy)
+    // @JoinTable({
+    //     name: 'user_favorite_skills',
+    //     joinColumn: { name: 'userId', referencedColumnName: 'id' },
+    //     inverseJoinColumn: { name: 'skillId', referencedColumnName: 'id' },
+    // })
+    // favoriteSkills: Skill[];
 
     @Column({ type: 'enum', enum: ['USER', 'ADMIN'], default: 'USER' })
     role: 'USER' | 'ADMIN';
