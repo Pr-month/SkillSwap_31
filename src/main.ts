@@ -9,4 +9,4 @@ async function bootstrap() {
   const { port } = configService.getOrThrow<IConfig>(configuration.KEY);
   await app.listen(port);
 }
-bootstrap();
+void bootstrap();
