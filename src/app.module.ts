@@ -5,12 +5,15 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
-import { Test } from './test.entity';
+import { configuration } from './config/app.config';
+import { jwtConfig } from './config/jwt.config';
+import { Test } from './test.entity'
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      load: [configuration, jwtConfig],
     }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
