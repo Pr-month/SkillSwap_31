@@ -25,8 +25,8 @@ export class User {
     @Column({ nullable: true })
     city?: string;
 
-    @Column({ type: 'enum', enum: ['male', 'female'], default: '' })
-    gender: 'male' | 'female';
+    @Column({ type: 'enum', enum: ['male', 'female', 'unspecified'], default: 'unspecified' })
+    gender: 'male' | 'female' | 'unspecified';
 
     @Column({ nullable: true })
     avatar?: string;
