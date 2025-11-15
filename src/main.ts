@@ -6,7 +6,7 @@ import { configuration, IConfig } from './config/app.config';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const configService = app.get(ConfigService);
-  const { port } = configService.getOrThrow<IConfig>(configuration.KEY);
-  await app.listen(port);
+  const appConfig = configService.getOrThrow<IConfig>('APP_CONFIG');
+  await app.listen(appConfig.port);
 }
 void bootstrap();
