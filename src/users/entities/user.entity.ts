@@ -1,4 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+import { Gender, Role } from '../enum';
 // import { Skill } from '../../skills/entities/skill.entity';
 // import { Category } from '../../categories/entities/category.entity';
 
@@ -25,8 +26,12 @@ export class User {
     @Column({ nullable: true })
     city?: string;
 
-    @Column({ type: 'enum', enum: ['male', 'female', 'unspecified'], default: 'unspecified' })
-    gender: 'male' | 'female' | 'unspecified';
+    @Column({
+        type: 'enum',
+        enum: Gender,
+        default: Gender.Unspecified,
+    })
+    gender: Gender;
 
     @Column({ nullable: true })
     avatar?: string;
@@ -50,8 +55,12 @@ export class User {
     // })
     // favoriteSkills: Skill[];
 
-    @Column({ type: 'enum', enum: ['USER', 'ADMIN'], default: 'USER' })
-    role: 'USER' | 'ADMIN';
+    @Column({
+        type: 'enum',
+        enum: Role,
+        default: Role.User,
+    })
+    role: Role;
 
     @Column({ nullable: true })
     refreshToken?: string;

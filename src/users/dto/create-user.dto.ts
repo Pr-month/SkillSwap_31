@@ -9,6 +9,7 @@ import {
     IsUrl
 } from 'class-validator';
 import { Type } from 'class-transformer';
+import { Gender, Role } from '../enum';
 
 export class CreateUserDto {
     @IsString()
@@ -39,14 +40,14 @@ export class CreateUserDto {
     city?: string;
 
     @IsOptional()
-    @IsEnum(['male', 'female', 'unspecified'])
-    gender?: 'male' | 'female' | 'unspecified';
+    @IsEnum(Gender)
+    gender?: Gender;
 
     @IsOptional()
     @IsUrl()
     avatar?: string;
 
     @IsOptional()
-    @IsEnum(['USER', 'ADMIN'])
-    role?: 'USER' | 'ADMIN';
+    @IsEnum(Role)
+    role?: Role;
 }
