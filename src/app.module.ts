@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { WinstonModule } from 'nest-winston';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UsersModule } from './users/users.module';
@@ -10,12 +11,16 @@ import { jwtConfig } from './config/jwt.config';
 import { Test } from './test.entity'
 import { dbConfig, TDbConfig } from './config/typeorm.config';
 import { SkillsModule } from './skills/skills.module';
+import { createWinstonLogger } from './config/logger.config';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
       load: [configuration, jwtConfig, dbConfig],
+    }),
+    WinstonModule.forRoot({
+      instance: createWinstonLogger(),
     }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
