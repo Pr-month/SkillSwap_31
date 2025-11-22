@@ -12,29 +12,13 @@ export function createWinstonLogger(): Logger {
 
   return createLogger({
     level: process.env.LOG_LEVEL || 'info',
-    
     format: format.combine(
       format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
       format.errors({ stack: true }),
       format.splat(),
       format.json(),
     ),
-
-    transports: [
-      new transports.Console({
-        format: format.combine(
-          format.printf(({ timestamp, level, message, ...meta }) => {
-            let msg = `[${timestamp}] ${level}: ${message}`;
-            if (Object.keys(meta).length > 0) {
-              msg += ` ${JSON.stringify(meta)}`;
-            }
-            return msg;
-          }),
-        ),
-      }),
-      fileTransport,
-    ],
-
+    transports: [fileTransport],
     exceptionHandlers: [fileTransport],
     rejectionHandlers: [fileTransport],
   });
