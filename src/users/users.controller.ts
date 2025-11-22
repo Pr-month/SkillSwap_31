@@ -6,8 +6,17 @@ import {
   Patch,
   Param,
   Delete,
+  UseGuards,
+  Request,
+  HttpCode,
+  HttpStatus,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
+import { JwtAccessGuard } from 'src/auth/guards/jwt-access.guard';
+import { UserResponseDto } from './dto/user-response.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 // import { CreateUserDto } from './dto/create-user.dto';
 // import { UpdateUserDto } from './dto/update-user.dto';
 
@@ -25,14 +34,43 @@ export class UsersController {
     return this.usersService.findAll();
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.usersService.findOne(+id);
+  @Get('me')
+  @UseGuards(JwtAccessGuard)
+  async getMe(@Request() req): Promise<UserResponseDto> {
+    const user = await this.usersService.findById(req.user.id);
+    return new UserResponseDto(user);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string) {
-    return this.usersService.update(+id);
+  @Get(':id')
+  async findOne(
+    @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
+  ): Promise<UserResponseDto> {
+    const user = await this.usersService.findById(id);
+    return new UserResponseDto(user);
+  }
+
+  @Patch('me/password')
+  @UseGuards(JwtAccessGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async changePassword(
+    @Request() req,
+    @Body() changePasswordDto: ChangePasswordDto,
+  ) {
+    await this.usersService.changePassword(
+      req.user.id,
+      changePasswordDto.oldPassword,
+      changePasswordDto.newPassword,
+    );
+  }
+
+  @Patch('me')
+  @UseGuards(JwtAccessGuard)
+  async updateMe(
+    @Request() req,
+    @Body() updateUserDto: UpdateUserDto,
+  ): Promise<UserResponseDto> {
+    const updatedUser = await this.usersService.update(req.user.id, updateUserDto);
+    return new UserResponseDto(updatedUser);
   }
 
   @Delete(':id')
