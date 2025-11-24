@@ -12,6 +12,7 @@ import { Test } from './test.entity'
 import { dbConfig, TDbConfig } from './config/typeorm.config';
 import { SkillsModule } from './skills/skills.module';
 import { createWinstonLogger } from './config/logger.config';
+import { CategoriesModule } from './categories/categories.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { createWinstonLogger } from './config/logger.config';
     UsersModule,
     AuthModule,
     SkillsModule,
+    CategoriesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
