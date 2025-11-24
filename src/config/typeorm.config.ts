@@ -1,32 +1,13 @@
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
-import { ConfigService } from '@nestjs/config';
-import { IConfig } from './app.config';
+import { ConfigType, registerAs } from '@nestjs/config';
 
-export const getTypeOrmConfig = (configService: ConfigService): TypeOrmModuleOptions => {
-  const config = configService.get<IConfig>('APP_CONFIG');
-  
-  if (!config) {
-    throw new Error('APP_CONFIG not found');
-  }
-
-  if (config.database.url) {
-    return {
-      type: 'postgres',
-      url: config.database.url,
-      entities: [__dirname + '/../**/*.entity{.ts,.js}'],
-      synchronize: config.environment === 'development',
-      logging: config.environment === 'development',
-    };
-  }
-  return {
+export const dbConfig = registerAs('DB_CONFIG', (): TypeOrmModuleOptions => ({
     type: 'postgres',
-    host: config.database.host,
-    port: config.database.port,
-    username: config.database.username,
-    password: config.database.password,
-    database: config.database.database,
-    entities: [__dirname + '/../**/*.entity{.ts,.js}'],
-    synchronize: config.environment === 'development',
-    logging: config.environment === 'development',
-  };
-};
+    host: process.env.DB_HOST || 'localhost',
+    port: Number(process.env.DB_PORT) || 5432,
+    username: process.env.DB_USERNAME || 'postgres',
+    password: process.env.DB_PASSWORD || 'postgres',
+    database: process.env.DB_NAME || 'skillswap',
+}));
+
+export type TDbConfig = ConfigType<typeof dbConfig>;
