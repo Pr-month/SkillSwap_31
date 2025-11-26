@@ -22,4 +22,10 @@ export class AuthController {
   refresh(@Body('refreshToken') refreshToken: string) {
     return this.authService.refresh(refreshToken);
   }
+
+  @UseGuards(JwtRefreshGuard)
+  @Post('logout')
+  logout(@Body('refreshToken') refreshToken: string) {
+    return this.authService.logout(refreshToken);
+  }
 }
