@@ -69,4 +69,13 @@ export class AuthService {
       throw new UnauthorizedException('Invalid or expired refresh token');
     }
   }
+
+  logout(refreshToken: string) {
+    try {
+      this.jwtService.verify(refreshToken, { secret: 'refresh_secret' });
+      return { message: 'Logged out successfully' };
+    } catch {
+      throw new UnauthorizedException('Invalid or expired refresh token');
+    }
+  }
 }
