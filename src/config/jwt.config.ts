@@ -5,4 +5,4 @@ export const jwtConfig = registerAs('jwt', () => ({
   expiresIn: process.env.JWT_EXPIRES_IN ?? '1h',
 }));
 
-export type JwtConfig = ConfigType<typeof jwtConfig>;
+export type TJwtConfig = ConfigType<typeof jwtConfig>;
