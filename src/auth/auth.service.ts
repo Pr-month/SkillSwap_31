@@ -6,49 +6,25 @@ import { JwtService } from '@nestjs/jwt';
 export class AuthService {
   constructor(private readonly jwtService: JwtService) {}
 
-  login(loginDto: CreateAuthDto) {
+  async login(loginDto: CreateAuthDto) {
     const { name, email } = loginDto;
+    const tokens = await this.generateTokens({ name, email });
     return {
       user: { name, email },
-      accessToken: this.jwtService.sign(
-        { name, email },
-        {
-          secret: 'access_secret',
-          expiresIn: '1h',
-        },
-      ),
-      refreshToken: this.jwtService.sign(
-        { name, email },
-        {
-          secret: 'refresh_secret',
-          expiresIn: '7d',
-        },
-      ),
+      ...tokens,
     };
   }
 
-  register(registerDto: CreateAuthDto) {
+  async register(registerDto: CreateAuthDto) {
     const { name, email } = registerDto;
+    const tokens = await this.generateTokens({ name, email });
     return {
       user: { name, email },
-      accessToken: this.jwtService.sign(
-        { name, email },
-        {
-          secret: 'access_secret',
-          expiresIn: '1h',
-        },
-      ),
-      refreshToken: this.jwtService.sign(
-        { name, email },
-        {
-          secret: 'refresh_secret',
-          expiresIn: '7d',
-        },
-      ),
+      ...tokens,
     };
   }
 
-  refresh(refreshToken: string) {
+  async refresh(refreshToken: string) {
     try {
       const { name, email } = this.jwtService.verify<{
         name: string;
@@ -56,17 +32,27 @@ export class AuthService {
       }>(refreshToken, {
         secret: 'refresh_secret',
       });
+      const tokens = await this.generateTokens({ name, email });
       return {
-        accessToken: this.jwtService.sign(
-          { name, email },
-          {
-            secret: 'access_secret',
-            expiresIn: '1h',
-          },
-        ),
+        accessToken: tokens.accessToken,
       };
     } catch {
       throw new UnauthorizedException('Invalid or expired refresh token');
     }
+  }
+
+  private async generateTokens(payload: {
+    name: string;
+    email: string;
+  }): Promise<{ accessToken: string; refreshToken: string }> {
+    const accessToken = await this.jwtService.signAsync(payload, {
+      secret: 'access_secret',
+      expiresIn: '1h',
+    });
+    const refreshToken = await this.jwtService.signAsync(payload, {
+      secret: 'refresh_secret',
+      expiresIn: '7d',
+    });
+    return { accessToken, refreshToken };
   }
 }
