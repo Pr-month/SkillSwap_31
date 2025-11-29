@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 // import { CreateUserDto } from './dto/create-user.dto';
 import { User } from './entities/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -9,8 +13,8 @@ import { UpdateUserDto } from './dto/update-user.dto';
 @Injectable()
 export class UsersService {
   constructor(
-      @InjectRepository(User)
-      private usersRepository: Repository<User>,
+    @InjectRepository(User)
+    private usersRepository: Repository<User>,
   ) {}
 
   create() {
@@ -46,7 +50,11 @@ export class UsersService {
     return user;
   }
 
-  async changePassword(userId: string, oldPassword: string, newPassword: string): Promise<void> {
+  async changePassword(
+    userId: string,
+    oldPassword: string,
+    newPassword: string,
+  ): Promise<void> {
     const user = await this.usersRepository.findOne({
       where: { id: userId },
       select: ['id', 'password'],
