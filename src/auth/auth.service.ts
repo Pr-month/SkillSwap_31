@@ -20,6 +20,8 @@ export class AuthService {
     };
   }
 
+  async logout(refreshToken: string) {}
+
   async register(registerDto: CreateAuthDto) {
     const { name, email } = registerDto;
     const tokens = await this.generateTokens({ name, email });
