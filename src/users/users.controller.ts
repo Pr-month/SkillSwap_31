@@ -20,6 +20,14 @@ import { UpdateUserDto } from './dto/update-user.dto';
 // import { CreateUserDto } from './dto/create-user.dto';
 // import { UpdateUserDto } from './dto/update-user.dto';
 
+interface RequestWithUser extends Request {
+  user: {
+    id: string;
+    name: string;
+    email: string;
+  };
+}
+
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
@@ -36,7 +44,7 @@ export class UsersController {
 
   @Get('me')
   @UseGuards(JwtAccessGuard)
-  async getMe(@Request() req): Promise<UserResponseDto> {
+  async getMe(@Request() req: RequestWithUser): Promise<UserResponseDto> {
     const user = await this.usersService.findById(req.user.id);
     return new UserResponseDto(user);
   }
@@ -53,7 +61,7 @@ export class UsersController {
   @UseGuards(JwtAccessGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   async changePassword(
-    @Request() req,
+    @Request() req: RequestWithUser,
     @Body() changePasswordDto: ChangePasswordDto,
   ) {
     await this.usersService.changePassword(
@@ -66,10 +74,13 @@ export class UsersController {
   @Patch('me')
   @UseGuards(JwtAccessGuard)
   async updateMe(
-    @Request() req,
+    @Request() req: RequestWithUser,
     @Body() updateUserDto: UpdateUserDto,
   ): Promise<UserResponseDto> {
-    const updatedUser = await this.usersService.update(req.user.id, updateUserDto);
+    const updatedUser = await this.usersService.update(
+      req.user.id,
+      updateUserDto,
+    );
     return new UserResponseDto(updatedUser);
   }
 
