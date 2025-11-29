@@ -14,6 +14,7 @@ import { Test } from './test.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsersModule } from './users/users.module';
 import { WinstonModule } from 'nest-winston';
+import { FileUploadModule } from './file-upload/file-upload.module';
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { WinstonModule } from 'nest-winston';
     AuthModule,
     SkillsModule,
     CategoriesModule,
+    FileUploadModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -3,7 +3,7 @@ import * as path from 'path';
 
 export function createWinstonLogger(): Logger {
   const logFile = path.join(process.cwd(), 'logs', 'app.log');
-  
+
   const fileTransport = new transports.File({
     filename: logFile,
     maxsize: 5242880,
@@ -23,4 +23,3 @@ export function createWinstonLogger(): Logger {
     rejectionHandlers: [fileTransport],
   });
 }
-
