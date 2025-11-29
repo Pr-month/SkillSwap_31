@@ -46,6 +46,17 @@ export class AuthService {
     }
   }
 
+  logout(refreshToken: string): { message: string } {
+    try {
+      this.jwtService.verify(refreshToken, {
+        secret: 'refresh_secret',
+      });
+      return { message: 'Logged out successfully' };
+    } catch {
+      throw new UnauthorizedException('Invalid or expired refresh token');
+    }
+  }
+
   private async generateTokens(payload: {
     name: string;
     email: string;
