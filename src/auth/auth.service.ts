@@ -31,6 +31,8 @@ export class AuthService {
     };
   }
 
+  async logout(refreshToken: string) {}
+
   async register(registerDto: CreateAuthDto) {
     const { name, email, password } = registerDto;
 
