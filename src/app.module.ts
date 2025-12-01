@@ -10,10 +10,18 @@ import { AuthModule } from './auth/auth.module';
 import { SkillsModule } from './skills/skills.module';
 import { CategoriesModule } from './categories/categories.module';
 import { configuration } from './config/app.config';
+import { jwtConfig } from './config/jwt.config';
+import { Test } from './test.entity';
+import { createWinstonLogger } from './config/logger.config';
+import { dbConfig, TDbConfig } from './config/typeorm.config';
 import { jwtConfig, TJwtConfig } from './config/jwt.config';
 import { dbConfig, TDbConfig } from './config/typeorm.config';
 import { createWinstonLogger } from './config/logger.config';
 import { Test } from './test.entity';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { UsersModule } from './users/users.module';
+import { WinstonModule } from 'nest-winston';
+import { FileUploadModule } from './file-upload/file-upload.module';
 
 @Module({
   imports: [
@@ -46,6 +54,7 @@ import { Test } from './test.entity';
     AuthModule,
     SkillsModule,
     CategoriesModule,
+    FileUploadModule,
   ],
   controllers: [AppController],
   providers: [AppService],

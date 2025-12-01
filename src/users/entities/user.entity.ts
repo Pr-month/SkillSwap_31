@@ -1,7 +1,7 @@
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToMany, JoinTable } from 'typeorm';
 import { Gender, Role } from '../enum';
-// import { Skill } from '../../skills/entities/skill.entity';
-// import { Category } from '../../categories/entities/category.entity';
+import { Skill } from '../../skills/entities/skill.entity';
+import { Category } from '../../categories/entities/category.entity';
 
 @Entity()
 export class User {
