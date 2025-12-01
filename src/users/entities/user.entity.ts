@@ -62,10 +62,6 @@ export class User {
   })
   role: Role;
 
-  @Column({
-    type: 'text',
-    array: true,
-    nullable: true
-  })
-  refreshToken?: string[]; // Предполагаем, что это массив строк для хранения нескольких токенов
+  @Column({ nullable: true })
+  refreshToken?: string;
 }

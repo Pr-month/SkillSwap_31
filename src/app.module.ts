@@ -1,9 +1,15 @@
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { ConfigModule } from '@nestjs/config';
+import { WinstonModule } from 'nest-winston';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { CategoriesModule } from './categories/categories.module';
 import { ConfigModule } from '@nestjs/config';
 import { configuration } from './config/app.config';
+import { jwtConfig } from './config/jwt.config';
+import { Test } from './test.entity';
 import { createWinstonLogger } from './config/logger.config';
 import { dbConfig, TDbConfig } from './config/typeorm.config';
 import { jwtConfig, TJwtConfig } from './config/jwt.config';

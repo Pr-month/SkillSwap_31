@@ -6,14 +6,6 @@ import {
   Patch,
   Param,
   Delete,
-  UseGuards,
-  Request,
-  UsePipes,
-  ValidationPipe,
-  Query,
-  ParseUUIDPipe,
-  HttpCode,
-  HttpStatus,
 } from '@nestjs/common';
 import { SkillsService } from './skills.service';
 import { CreateSkillDto } from './dto/create-skill.dto';
