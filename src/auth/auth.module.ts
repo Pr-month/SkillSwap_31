@@ -1,11 +1,12 @@
-import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
-import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
+import { AuthService } from './auth.service';
+import { ConfigModule } from '@nestjs/config';
 import { jwtConfig } from '../config/jwt.config';
+import { Module } from '@nestjs/common';
+import { UsersModule } from '../users/users.module';
 
 @Module({
-  imports: [ConfigModule.forFeature(jwtConfig)],
+  imports: [ConfigModule.forFeature(jwtConfig), UsersModule],
   controllers: [AuthController],
   providers: [AuthService],
 })
