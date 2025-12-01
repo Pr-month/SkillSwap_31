@@ -1,18 +1,27 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ConfigModule } from '@nestjs/config';
 import { WinstonModule } from 'nest-winston';
+import { JwtModule, JwtModuleOptions } from '@nestjs/jwt';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
+import { SkillsModule } from './skills/skills.module';
+import { CategoriesModule } from './categories/categories.module';
 import { configuration } from './config/app.config';
 import { jwtConfig } from './config/jwt.config';
-import { Test } from './test.entity'
-import { dbConfig, TDbConfig } from './config/typeorm.config';
-import { SkillsModule } from './skills/skills.module';
+import { Test } from './test.entity';
 import { createWinstonLogger } from './config/logger.config';
-import { CategoriesModule } from './categories/categories.module';
+import { dbConfig, TDbConfig } from './config/typeorm.config';
+import { jwtConfig, TJwtConfig } from './config/jwt.config';
+import { dbConfig, TDbConfig } from './config/typeorm.config';
+import { createWinstonLogger } from './config/logger.config';
+import { Test } from './test.entity';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { UsersModule } from './users/users.module';
+import { WinstonModule } from 'nest-winston';
+import { FileUploadModule } from './file-upload/file-upload.module';
 
 @Module({
   imports: [
@@ -22,6 +31,18 @@ import { CategoriesModule } from './categories/categories.module';
     }),
     WinstonModule.forRoot({
       instance: createWinstonLogger(),
+    }),
+    JwtModule.registerAsync({
+      global: true,
+      imports: [ConfigModule],
+      inject: [jwtConfig.KEY],
+      useFactory: (config: TJwtConfig): JwtModuleOptions => ({
+        global: true,
+        secret: config.accessSecret,
+        signOptions: {
+          expiresIn: config.accessExpiresIn,
+        },
+      }),
     }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
@@ -33,6 +54,7 @@ import { CategoriesModule } from './categories/categories.module';
     AuthModule,
     SkillsModule,
     CategoriesModule,
+    FileUploadModule,
   ],
   controllers: [AppController],
   providers: [AppService],
