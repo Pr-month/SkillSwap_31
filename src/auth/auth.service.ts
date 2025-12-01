@@ -1,7 +1,16 @@
 import { CreateAuthDto } from './dto/create-auth.dto';
-import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  UnauthorizedException,
+  ConflictException,
+} from '@nestjs/common';
 import { jwtConfig, TJwtConfig } from 'src/config/jwt.config';
 import { JwtService } from '@nestjs/jwt';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { User } from '../users/entities/user.entity';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class AuthService {
@@ -9,6 +18,8 @@ export class AuthService {
     private readonly jwtService: JwtService,
     @Inject(jwtConfig.KEY)
     private readonly config: TJwtConfig,
+    @InjectRepository(User)
+    private usersRepository: Repository<User>,
   ) {}
 
   async login(loginDto: CreateAuthDto) {
@@ -23,8 +34,32 @@ export class AuthService {
   async logout(refreshToken: string) {}
 
   async register(registerDto: CreateAuthDto) {
-    const { name, email } = registerDto;
+    const { name, email, password } = registerDto;
+
+    // Проверяем, существует ли пользователь с таким email
+    const existingUser = await this.usersRepository.findOne({
+      where: { email },
+    });
+
+    if (existingUser) {
+      throw new ConflictException('Пользователь с таким email уже существует');
+    }
+
+    // Хешируем пароль
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Создаем нового пользователя
+    const newUser = this.usersRepository.create({
+      name,
+      email,
+      password: hashedPassword,
+    });
+
+    await this.usersRepository.save(newUser);
+
+    // Генерируем токены
     const tokens = await this.generateTokens({ name, email });
+
     return {
       user: { name, email },
       ...tokens,
