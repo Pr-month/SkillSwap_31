@@ -11,12 +11,15 @@ import {
   HttpCode,
   HttpStatus,
   ParseUUIDPipe,
+  Query,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { JwtAccessGuard } from 'src/auth/guards/jwt-access.guard';
 import { UserResponseDto } from './dto/user-response.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { GetUsersQueryDto } from './dto/get-users-query.dto';
+import { UsersListResponseDto } from './dto/users-list-response.dto';
 // import { CreateUserDto } from './dto/create-user.dto';
 // import { UpdateUserDto } from './dto/update-user.dto';
 
@@ -30,8 +33,17 @@ export class UsersController {
   }
 
   @Get()
-  findAll() {
-    return this.usersService.findAll();
+  async findAll(
+    @Query() query: GetUsersQueryDto,
+  ): Promise<UsersListResponseDto> {
+    const { users, total } = await this.usersService.findAll(query);
+    const userDtos = users.map((user) => new UserResponseDto(user));
+    return new UsersListResponseDto(
+      userDtos,
+      total,
+      query.page || 1,
+      query.limit || 20,
+    );
   }
 
   @Get('me')

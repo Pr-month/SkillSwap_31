@@ -9,6 +9,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { GetUsersQueryDto } from './dto/get-users-query.dto';
 
 @Injectable()
 export class UsersService {
@@ -21,8 +22,66 @@ export class UsersService {
     return 'This action adds a new user';
   }
 
-  findAll() {
-    return `This action returns all users`;
+  async findAll(
+    query: GetUsersQueryDto,
+  ): Promise<{ users: User[]; total: number }> {
+    const {
+      page = 1,
+      limit = 20,
+      city,
+      gender,
+      role,
+      search,
+      sortBy = 'name',
+      order = 'ASC',
+    } = query;
+
+    const skip = (page - 1) * limit;
+
+    const queryBuilder = this.usersRepository.createQueryBuilder('user');
+
+    queryBuilder.select([
+      'user.id',
+      'user.name',
+      'user.email',
+      'user.about',
+      'user.birthdate',
+      'user.city',
+      'user.gender',
+      'user.avatar',
+      'user.role',
+    ]);
+
+    if (city) {
+      queryBuilder.andWhere('user.city = :city', { city });
+    }
+
+    if (gender) {
+      queryBuilder.andWhere('user.gender = :gender', { gender });
+    }
+
+    if (role) {
+      queryBuilder.andWhere('user.role = :role', { role });
+    }
+
+    if (search) {
+      queryBuilder.andWhere(
+        '(user.name ILIKE :search OR user.email ILIKE :search)',
+        {
+          search: `%${search}%`,
+        },
+      );
+    }
+
+    const allowedSortFields = ['name', 'email', 'city', 'birthdate'];
+    const sortField = allowedSortFields.includes(sortBy) ? sortBy : 'name';
+    queryBuilder.orderBy(`user.${sortField}`, order);
+
+    queryBuilder.skip(skip).take(limit);
+
+    const [users, total] = await queryBuilder.getManyAndCount();
+
+    return { users, total };
   }
 
   async findById(id: string): Promise<User> {
