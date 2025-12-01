@@ -1,15 +1,15 @@
-import { CreateAuthDto } from './dto/create-auth.dto';
+import { CreateUserDto } from '../users/dto/create-user.dto';
 import {
   Inject,
   Injectable,
   UnauthorizedException,
-  ConflictException,
+  forwardRef,
+  Inject as NestInject,
 } from '@nestjs/common';
 import { jwtConfig, TJwtConfig } from 'src/config/jwt.config';
 import { JwtService } from '@nestjs/jwt';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { User } from '../users/entities/user.entity';
+import { LoginAuthDto } from './dto/login-auth.dto';
+import { UsersService } from '../users/users.service';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
@@ -18,50 +18,82 @@ export class AuthService {
     private readonly jwtService: JwtService,
     @Inject(jwtConfig.KEY)
     private readonly config: TJwtConfig,
-    @InjectRepository(User)
-    private usersRepository: Repository<User>,
+    @NestInject(forwardRef(() => UsersService))
+    private readonly usersService: UsersService,
   ) {}
 
-  async login(loginDto: CreateAuthDto) {
-    const { name, email } = loginDto;
-    const tokens = await this.generateTokens({ name, email });
+  async login(loginDto: LoginAuthDto) {
+    const { email, password } = loginDto;
+
+    const user = await this.usersService.findByEmail(email);
+    if (!user) {
+      throw new UnauthorizedException('Неверный email или пароль');
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Неверный email или пароль');
+    }
+
+    const tokens = await this.generateTokens({
+      name: user.name,
+      email: user.email,
+    });
+
+    await this.usersService['usersRepository'].update(user.id, {
+      refreshToken: tokens.refreshToken,
+    });
+
     return {
-      user: { name, email },
+      user: { name: user.name, email: user.email },
       ...tokens,
     };
   }
 
-  async logout(refreshToken: string) {}
+  async logout(refreshToken: string) {
+    if (!refreshToken) return;
 
-  async register(registerDto: CreateAuthDto) {
-    const { name, email, password } = registerDto;
-
-    // Проверяем, существует ли пользователь с таким email
-    const existingUser = await this.usersRepository.findOne({
-      where: { email },
-    });
-
-    if (existingUser) {
-      throw new ConflictException('Пользователь с таким email уже существует');
+    let payload: { email: string };
+    try {
+      payload = this.jwtService.verify(refreshToken, {
+        secret: this.config.refreshSecret,
+      });
+    } catch {
+      return;
     }
 
-    // Хешируем пароль
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const user = await this.usersService.findByEmail(payload.email);
+    if (user) {
+      await this.usersService['usersRepository'].update(user.id, {
+        refreshToken: undefined,
+      });
+    }
+  }
 
-    // Создаем нового пользователя
-    const newUser = this.usersRepository.create({
-      name,
+  async register(registerDto: CreateUserDto) {
+    const { email, password, ...rest } = registerDto;
+
+    const existingUser = await this.usersService.findByEmail(email);
+    if (existingUser) {
+      throw new UnauthorizedException(
+        'Пользователь с таким email уже существует',
+      );
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const user = await this.usersService.createUser({
+      ...rest,
       email,
       password: hashedPassword,
     });
 
-    await this.usersRepository.save(newUser);
-
-    // Генерируем токены
-    const tokens = await this.generateTokens({ name, email });
+    const tokens = await this.generateTokens({
+      name: user.name,
+      email: user.email,
+    });
 
     return {
-      user: { name, email },
+      user: { name: user.name, email: user.email },
       ...tokens,
     };
   }
@@ -74,7 +106,9 @@ export class AuthService {
       }>(refreshToken, {
         secret: 'refresh_secret',
       });
+
       const tokens = await this.generateTokens({ name, email });
+
       return {
         accessToken: tokens.accessToken,
       };
