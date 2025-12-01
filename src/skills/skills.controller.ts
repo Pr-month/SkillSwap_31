@@ -6,6 +6,14 @@ import {
   Patch,
   Param,
   Delete,
+  UseGuards,
+  UsePipes,
+  ValidationPipe,
+  Query,
+  ParseUUIDPipe,
+  HttpCode,
+  HttpStatus,
+  Req
 } from '@nestjs/common';
 import { SkillsService } from './skills.service';
 import { CreateSkillDto } from './dto/create-skill.dto';
@@ -23,7 +31,7 @@ export class SkillsController {
   @UseGuards(JwtAccessGuard)
   async create(
     @Body() createSkillDto: CreateSkillDto,
-    @Request() req,
+    @Req() req,
   ): Promise<Skill> {
     return await this.skillsService.create(createSkillDto, { id: req.user.id } as User);
   }
@@ -44,7 +52,7 @@ export class SkillsController {
   async update(
     @Param('id', ParseUUIDPipe) id: string, 
     @Body() updateSkillDto: UpdateSkillDto,
-    @Request() req,
+    @Req() req,
   ) {
     return this.skillsService.update(id, updateSkillDto, req.user.id);
   }
@@ -54,7 +62,7 @@ export class SkillsController {
   @HttpCode(HttpStatus.NO_CONTENT)
   async remove(
     @Param('id', ParseUUIDPipe) id: string,
-    @Request() req,
+    @Req() req,
   ) {
     await this.skillsService.remove(id, req.user.id);
   }

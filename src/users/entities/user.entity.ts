@@ -36,8 +36,8 @@ export class User {
   @Column({ nullable: true })
   avatar?: string;
 
-  // @OneToMany(() => Skill, skill => skill.owner)
-  // skills: Skill[];
+  @OneToMany(() => Skill, skill => skill.owner)
+  skills: Skill[];
 
   // @ManyToMany(() => Category, { nullable: true })
   // @JoinTable({

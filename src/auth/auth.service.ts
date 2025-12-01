@@ -70,6 +70,8 @@ export class AuthService {
     }
   }
 
+
+
   async register(registerDto: CreateUserDto) {
     const { email, password, ...rest } = registerDto;
 
@@ -112,17 +114,6 @@ export class AuthService {
       return {
         accessToken: tokens.accessToken,
       };
-    } catch {
-      throw new UnauthorizedException('Invalid or expired refresh token');
-    }
-  }
-
-  logout(refreshToken: string): { message: string } {
-    try {
-      this.jwtService.verify(refreshToken, {
-        secret: 'refresh_secret',
-      });
-      return { message: 'Logged out successfully' };
     } catch {
       throw new UnauthorizedException('Invalid or expired refresh token');
     }
