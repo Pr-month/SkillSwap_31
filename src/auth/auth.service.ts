@@ -9,8 +9,11 @@ import {
 import { jwtConfig, TJwtConfig } from 'src/config/jwt.config';
 import { JwtService } from '@nestjs/jwt';
 import { LoginAuthDto } from './dto/login-auth.dto';
+import { User } from '../users/entities/user.entity';
 import { UsersService } from '../users/users.service';
 import * as bcrypt from 'bcrypt';
+
+type TJwtPayload = Pick<User, 'id' | 'email' | 'name' | 'role'>;
 
 @Injectable()
 export class AuthService {
@@ -36,8 +39,10 @@ export class AuthService {
     }
 
     const tokens = await this.generateTokens({
+      id: user.id,
       name: user.name,
       email: user.email,
+      role: user.role,
     });
 
     await this.usersService['usersRepository'].update(user.id, {
@@ -53,7 +58,7 @@ export class AuthService {
   async logout(refreshToken: string) {
     if (!refreshToken) return;
 
-    let payload: { email: string };
+    let payload: TJwtPayload;
     try {
       payload = this.jwtService.verify(refreshToken, {
         secret: this.config.refreshSecret,
@@ -69,8 +74,6 @@ export class AuthService {
       });
     }
   }
-
-
 
   async register(registerDto: CreateUserDto) {
     const { email, password, ...rest } = registerDto;
@@ -90,8 +93,10 @@ export class AuthService {
     });
 
     const tokens = await this.generateTokens({
+      id: user.id,
       name: user.name,
       email: user.email,
+      role: user.role,
     });
 
     return {
@@ -102,14 +107,11 @@ export class AuthService {
 
   async refresh(refreshToken: string) {
     try {
-      const { name, email } = this.jwtService.verify<{
-        name: string;
-        email: string;
-      }>(refreshToken, {
-        secret: 'refresh_secret',
+      const payload = this.jwtService.verify<TJwtPayload>(refreshToken, {
+        secret: this.config.refreshSecret,
       });
 
-      const tokens = await this.generateTokens({ name, email });
+      const tokens = await this.generateTokens(payload);
 
       return {
         accessToken: tokens.accessToken,
@@ -119,10 +121,9 @@ export class AuthService {
     }
   }
 
-  private async generateTokens(payload: {
-    name: string;
-    email: string;
-  }): Promise<{ accessToken: string; refreshToken: string }> {
+  private async generateTokens(
+    payload: TJwtPayload,
+  ): Promise<{ accessToken: string; refreshToken: string }> {
     const accessToken = await this.jwtService.signAsync(payload, {
       secret: this.config.accessSecret,
       expiresIn: this.config.accessExpiresIn,
