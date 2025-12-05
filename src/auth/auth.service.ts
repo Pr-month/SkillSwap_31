@@ -70,8 +70,6 @@ export class AuthService {
     }
   }
 
-
-
   async register(registerDto: CreateUserDto) {
     const { email, password, ...rest } = registerDto;
 
