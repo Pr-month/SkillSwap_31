@@ -15,6 +15,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsersModule } from './users/users.module';
 import { WinstonModule } from 'nest-winston';
 import { FileUploadModule } from './file-upload/file-upload.module';
+import { RequestsModule } from './requests/requests.module';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { FileUploadModule } from './file-upload/file-upload.module';
     SkillsModule,
     CategoriesModule,
     FileUploadModule,
+    RequestsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
