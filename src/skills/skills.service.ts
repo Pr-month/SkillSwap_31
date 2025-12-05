@@ -2,43 +2,197 @@ import {
   Injectable,
   NotFoundException,
   ConflictException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreateSkillDto } from './dto/create-skill.dto';
 import { UpdateSkillDto } from './dto/update-skill.dto';
+import { FindSkillsDto } from './dto/find-skills.dto';
 import { Skill } from './entities/skill.entity';
 import { User } from '../users/entities/user.entity';
+import { Category } from '../categories/entities/category.entity';
+import * as fs from 'fs';
+import * as path from 'path';
 
 @Injectable()
 export class SkillsService {
+  private uploadPath = path.join(__dirname, '..', '..', 'public', 'uploads');
+
   constructor(
     @InjectRepository(Skill)
     private skillsRepository: Repository<Skill>,
     @InjectRepository(User)
     private usersRepository: Repository<User>,
+    @InjectRepository(Category)
+    private categoriesRepository: Repository<Category>,
   ) {}
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  create(_createSkillDto: CreateSkillDto) {
-    return 'This action adds a new skill';
+  //создание навыка
+  async create(createSkillDto: CreateSkillDto, owner: User): Promise<Skill> {
+    const category = await this.categoriesRepository.findOne({
+      where: { id: createSkillDto.categoryId },
+    });
+
+    if (!category) {
+      throw new NotFoundException(
+        `Категория с ID "${createSkillDto.categoryId}" не найдена.`,
+      );
+    }
+
+    const skill = this.skillsRepository.create({
+      ...createSkillDto,
+      category,
+      owner,
+    });
+
+    return await this.skillsRepository.save(skill);
   }
 
-  findAll() {
-    return `This action returns all skills`;
+  //получение списка навыков
+  async findAll(findSkillsDto: FindSkillsDto) {
+    const { page = 1, limit = 10, search, category } = findSkillsDto;
+    const skip = (page - 1) * limit;
+
+    const queryBuilder = this.skillsRepository
+      .createQueryBuilder('skill')
+      .leftJoinAndSelect('skill.category', 'category')
+      .leftJoinAndSelect('category.parent', 'parent');
+
+    if (category) {
+      queryBuilder.andWhere('category.id = :categoryId', {
+        categoryId: category,
+      });
+    }
+
+    if (search) {
+      const searchLike = `%${search.toLowerCase()}%`;
+      queryBuilder.andWhere(
+        `(LOWER(skill.title) LIKE :search OR LOWER(category.name) LIKE :search OR LOWER(parent.name) LIKE :search)`,
+        { search: searchLike },
+      );
+    }
+
+    const [skills, total] = await queryBuilder
+      .skip(skip)
+      .take(limit)
+      .getManyAndCount();
+
+    const totalPages = Math.ceil(total / limit);
+
+    if (page > totalPages && total > 0) {
+      throw new NotFoundException(
+        `Page ${page} does not exist. Total pages: ${totalPages}`,
+      );
+    }
+
+    return {
+      data: skills,
+      page,
+      totalPages,
+    };
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} skill`;
+  async findOne(id: string): Promise<Skill> {
+    const skill = await this.skillsRepository.findOne({
+      where: { id },
+      relations: ['owner', 'category', 'favoritedBy'],
+    });
+
+    if (!skill) {
+      throw new NotFoundException('Навык не найден');
+    }
+
+    return skill;
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  update(id: number, _updateSkillDto: UpdateSkillDto) {
-    return `This action updates a #${id} skill`;
+  async update(
+    id: string,
+    updateSkillDto: UpdateSkillDto,
+    userEmail: string,
+  ): Promise<Skill> {
+    const skill = await this.skillsRepository.findOne({
+      where: { id },
+      relations: ['owner'],
+    });
+
+    if (!skill) {
+      throw new NotFoundException(`Навык с ID "${id}" не найден.`);
+    }
+
+    const user = await this.usersRepository.findOne({
+      where: { email: userEmail },
+    });
+
+    if (!user) {
+      throw new NotFoundException('Пользователь не найден');
+    }
+
+    if (skill.owner.id !== user.id) {
+      throw new ForbiddenException('Нет доступа.');
+    }
+
+    if (updateSkillDto.categoryId !== undefined) {
+      const category = await this.categoriesRepository.findOne({
+        where: { id: updateSkillDto.categoryId },
+      });
+      if (!category) {
+        throw new NotFoundException(
+          `Категория с ID "${updateSkillDto.categoryId}" не найдена.`,
+        );
+      }
+    }
+
+    await this.skillsRepository.update(id, updateSkillDto);
+
+    const updatedSkill = await this.skillsRepository.findOne({
+      where: { id },
+      relations: ['owner', 'category'],
+    });
+
+    if (!updatedSkill) {
+      throw new NotFoundException(`Навык с ID "${id}" не найден.`);
+    }
+
+    return updatedSkill;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} skill`;
+  //удаление навыка
+  async remove(id: string, userEmail: string): Promise<void> {
+    const skill = await this.skillsRepository.findOne({
+      where: { id },
+      relations: ['owner'],
+    });
+
+    if (!skill) {
+      throw new NotFoundException(`Навык с ID "${id}" не найден.`);
+    }
+
+    const user = await this.usersRepository.findOne({
+      where: { email: userEmail },
+    });
+
+    if (!user) {
+      throw new NotFoundException('Пользователь не найден');
+    }
+
+    if (skill.owner.id !== user.id) {
+      throw new ForbiddenException('Нет доступа.');
+    }
+
+    if (skill.images && skill.images.length > 0) {
+      for (const imageUrl of skill.images) {
+        const fileName = imageUrl.split('/').pop();
+        if (fileName) {
+          const filePath = path.join(this.uploadPath, fileName);
+          if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
+          }
+        }
+      }
+    }
+
+    await this.skillsRepository.delete(id);
   }
 
   async addToFavorites(skillId: string, userEmail: string): Promise<void> {
