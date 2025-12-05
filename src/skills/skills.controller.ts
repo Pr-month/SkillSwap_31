@@ -6,10 +6,24 @@ import {
   Patch,
   Param,
   Delete,
+  UseGuards,
+  Request,
+  HttpCode,
+  HttpStatus,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { SkillsService } from './skills.service';
 import { CreateSkillDto } from './dto/create-skill.dto';
 import { UpdateSkillDto } from './dto/update-skill.dto';
+import { JwtAccessGuard } from '../auth/guards/jwt-access.guard';
+
+interface RequestWithUser extends Request {
+  user: {
+    id: string;
+    name: string;
+    email: string;
+  };
+}
 
 @Controller('skills')
 export class SkillsController {
@@ -23,6 +37,16 @@ export class SkillsController {
   @Get()
   findAll() {
     return this.skillsService.findAll();
+  }
+
+  @Post(':id/favorite')
+  @UseGuards(JwtAccessGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async addToFavorites(
+    @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
+    @Request() req: RequestWithUser,
+  ): Promise<void> {
+    await this.skillsService.addToFavorites(id, req.user.email);
   }
 
   @Get(':id')
