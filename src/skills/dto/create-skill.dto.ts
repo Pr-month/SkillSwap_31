@@ -1,8 +1,17 @@
-import { IsString, IsNotEmpty, IsOptional, IsUUID, IsArray } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsOptional,
+  MaxLength,
+  IsArray,
+  IsUrl,
+  IsUUID,
+} from 'class-validator';
 
 export class CreateSkillDto {
   @IsString()
   @IsNotEmpty()
+  @MaxLength(200)
   title: string;
 
   @IsOptional()
@@ -15,6 +24,6 @@ export class CreateSkillDto {
 
   @IsOptional()
   @IsArray()
-  @IsString({ each: true })
+  @IsUrl({}, { each: true })
   images?: string[];
 }

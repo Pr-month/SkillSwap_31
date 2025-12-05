@@ -51,7 +51,7 @@ export class SkillsService {
 
   //получение списка навыков
   async findAll(findSkillsDto: FindSkillsDto) {
-    const { page = 1, limit = 10, search, category } = findSkillsDto;
+    const { page, limit, search, category } = findSkillsDto;
     const skip = (page - 1) * limit;
 
     const queryBuilder = this.skillsRepository
