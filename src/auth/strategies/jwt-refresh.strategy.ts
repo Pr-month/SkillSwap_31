@@ -1,6 +1,7 @@
+import { ExtractJwt, Strategy } from 'passport-jwt';
 import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
-import { ExtractJwt, Strategy } from 'passport-jwt';
+import { TJwtPayload } from '../auth.types';
 
 @Injectable()
 export class JwtRefreshStrategy extends PassportStrategy(
@@ -18,7 +19,7 @@ export class JwtRefreshStrategy extends PassportStrategy(
 
   validate<T extends { body: { refreshToken: string } }>(
     req: T,
-    payload: { name: string; email: string },
+    payload: TJwtPayload,
   ) {
     return {
       ...payload,

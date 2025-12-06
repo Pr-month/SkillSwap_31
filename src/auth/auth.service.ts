@@ -9,11 +9,9 @@ import {
 import { jwtConfig, TJwtConfig } from 'src/config/jwt.config';
 import { JwtService } from '@nestjs/jwt';
 import { LoginAuthDto } from './dto/login-auth.dto';
-import { User } from '../users/entities/user.entity';
+import { TJwtPayload } from './auth.types';
 import { UsersService } from '../users/users.service';
 import * as bcrypt from 'bcrypt';
-
-type TJwtPayload = Pick<User, 'id' | 'email' | 'name' | 'role'>;
 
 @Injectable()
 export class AuthService {

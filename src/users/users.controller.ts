@@ -1,3 +1,4 @@
+import { ChangePasswordDto } from './dto/change-password.dto';
 import {
   Controller,
   Get,
@@ -13,23 +14,15 @@ import {
   ParseUUIDPipe,
   Query,
 } from '@nestjs/common';
-import { UsersService } from './users.service';
-import { JwtAccessGuard } from 'src/auth/guards/jwt-access.guard';
-import { UserResponseDto } from './dto/user-response.dto';
-import { ChangePasswordDto } from './dto/change-password.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
 import { GetUsersQueryDto } from './dto/get-users-query.dto';
+import { JwtAccessGuard } from 'src/auth/guards/jwt-access.guard';
+import { TRequestWithUser } from 'src/auth/auth.types';
+import { UpdateUserDto } from './dto/update-user.dto';
+import { UserResponseDto } from './dto/user-response.dto';
 import { UsersListResponseDto } from './dto/users-list-response.dto';
+import { UsersService } from './users.service';
 // import { CreateUserDto } from './dto/create-user.dto';
 // import { UpdateUserDto } from './dto/update-user.dto';
-
-interface RequestWithUser extends Request {
-  user: {
-    id: string;
-    name: string;
-    email: string;
-  };
-}
 
 @Controller('users')
 export class UsersController {
@@ -56,7 +49,7 @@ export class UsersController {
 
   @Get('me')
   @UseGuards(JwtAccessGuard)
-  async getMe(@Request() req: RequestWithUser): Promise<UserResponseDto> {
+  async getMe(@Request() req: TRequestWithUser): Promise<UserResponseDto> {
     const user = await this.usersService.findById(req.user.id);
     return new UserResponseDto(user);
   }
@@ -73,7 +66,7 @@ export class UsersController {
   @UseGuards(JwtAccessGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   async changePassword(
-    @Request() req: RequestWithUser,
+    @Request() req: TRequestWithUser,
     @Body() changePasswordDto: ChangePasswordDto,
   ) {
     await this.usersService.changePassword(
@@ -86,7 +79,7 @@ export class UsersController {
   @Patch('me')
   @UseGuards(JwtAccessGuard)
   async updateMe(
-    @Request() req: RequestWithUser,
+    @Request() req: TRequestWithUser,
     @Body() updateUserDto: UpdateUserDto,
   ): Promise<UserResponseDto> {
     const updatedUser = await this.usersService.update(
