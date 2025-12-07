@@ -1,3 +1,4 @@
+import { TJwtPayload } from '../auth.types';
 import { Inject, Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
@@ -19,7 +20,7 @@ export class JwtAccessStrategy extends PassportStrategy(
     });
   }
 
-  validate(payload: { name: string; email: string }) {
+  validate(payload: TJwtPayload) {
     return payload;
   }
 }
