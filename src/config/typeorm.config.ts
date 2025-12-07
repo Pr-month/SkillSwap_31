@@ -13,7 +13,7 @@ const baseConfig = {
   username: process.env.DB_USERNAME || 'postgres',
   password: process.env.DB_PASSWORD || 'postgres',
   database: process.env.DB_NAME || 'skillswap',
-  synchronize: process.env.DB_SYNCHRONIZE === 'true',
+  synchronize: process.env.NODE_ENV !== 'production',
   logging: process.env.DB_LOGGING === 'true',
 };
 
