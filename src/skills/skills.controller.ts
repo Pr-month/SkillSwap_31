@@ -13,7 +13,7 @@ import {
   ParseUUIDPipe,
   HttpCode,
   HttpStatus,
-  Req
+  Req,
 } from '@nestjs/common';
 import { SkillsService } from './skills.service';
 import { CreateSkillDto } from './dto/create-skill.dto';
@@ -22,6 +22,14 @@ import { JwtAccessGuard } from 'src/auth/guards/jwt-access.guard';
 import { Skill } from './entities/skill.entity';
 import { User } from 'src/users/entities/user.entity';
 import { FindSkillsDto } from './dto/find-skills.dto';
+
+interface RequestWithUser extends Request {
+  user: {
+    id: string;
+    name: string;
+    email: string;
+  };
+}
 
 @Controller('skills')
 export class SkillsController {
@@ -33,7 +41,9 @@ export class SkillsController {
     @Body() createSkillDto: CreateSkillDto,
     @Req() req,
   ): Promise<Skill> {
-    return await this.skillsService.create(createSkillDto, { id: req.user.id } as User);
+    return await this.skillsService.create(createSkillDto, {
+      id: req.user.id,
+    } as User);
   }
 
   @Get()
@@ -50,7 +60,7 @@ export class SkillsController {
   @Patch(':id')
   @UseGuards(JwtAccessGuard)
   async update(
-    @Param('id', ParseUUIDPipe) id: string, 
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() updateSkillDto: UpdateSkillDto,
     @Req() req,
   ) {
@@ -60,10 +70,17 @@ export class SkillsController {
   @Delete(':id')
   @UseGuards(JwtAccessGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
-  async remove(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Req() req,
-  ) {
+  async remove(@Param('id', ParseUUIDPipe) id: string, @Req() req) {
     await this.skillsService.remove(id, req.user.id);
+  }
+
+  @Post(':id/favorite')
+  @UseGuards(JwtAccessGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async addToFavorites(
+    @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
+    @Req() req: RequestWithUser,
+  ): Promise<void> {
+    await this.skillsService.addToFavorites(id, req.user.email);
   }
 }
