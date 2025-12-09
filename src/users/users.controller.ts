@@ -1,3 +1,4 @@
+import { ChangePasswordDto } from './dto/change-password.dto';
 import {
   Controller,
   Get,
@@ -11,12 +12,15 @@ import {
   HttpCode,
   HttpStatus,
   ParseUUIDPipe,
+  Query,
 } from '@nestjs/common';
-import { UsersService } from './users.service';
+import { GetUsersQueryDto } from './dto/get-users-query.dto';
 import { JwtAccessGuard } from 'src/auth/guards/jwt-access.guard';
-import { UserResponseDto } from './dto/user-response.dto';
-import { ChangePasswordDto } from './dto/change-password.dto';
+import { TRequestWithUser } from 'src/auth/auth.types';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { UserResponseDto } from './dto/user-response.dto';
+import { UsersListResponseDto } from './dto/users-list-response.dto';
+import { UsersService } from './users.service';
 // import { CreateUserDto } from './dto/create-user.dto';
 // import { UpdateUserDto } from './dto/update-user.dto';
 
@@ -30,13 +34,22 @@ export class UsersController {
   }
 
   @Get()
-  findAll() {
-    return this.usersService.findAll();
+  async findAll(
+    @Query() query: GetUsersQueryDto,
+  ): Promise<UsersListResponseDto> {
+    const { users, total } = await this.usersService.findAll(query);
+    const userDtos = users.map((user) => new UserResponseDto(user));
+    return new UsersListResponseDto(
+      userDtos,
+      total,
+      query.page || 1,
+      query.limit || 20,
+    );
   }
 
   @Get('me')
   @UseGuards(JwtAccessGuard)
-  async getMe(@Request() req): Promise<UserResponseDto> {
+  async getMe(@Request() req: TRequestWithUser): Promise<UserResponseDto> {
     const user = await this.usersService.findById(req.user.id);
     return new UserResponseDto(user);
   }
@@ -53,7 +66,7 @@ export class UsersController {
   @UseGuards(JwtAccessGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   async changePassword(
-    @Request() req,
+    @Request() req: TRequestWithUser,
     @Body() changePasswordDto: ChangePasswordDto,
   ) {
     await this.usersService.changePassword(
@@ -66,10 +79,13 @@ export class UsersController {
   @Patch('me')
   @UseGuards(JwtAccessGuard)
   async updateMe(
-    @Request() req,
+    @Request() req: TRequestWithUser,
     @Body() updateUserDto: UpdateUserDto,
   ): Promise<UserResponseDto> {
-    const updatedUser = await this.usersService.update(req.user.id, updateUserDto);
+    const updatedUser = await this.usersService.update(
+      req.user.id,
+      updateUserDto,
+    );
     return new UserResponseDto(updatedUser);
   }
 
