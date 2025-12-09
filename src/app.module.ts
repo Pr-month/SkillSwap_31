@@ -16,6 +16,7 @@ import { UsersModule } from './users/users.module';
 import { WinstonModule } from 'nest-winston';
 import { FileUploadModule } from './file-upload/file-upload.module';
 import { RequestsModule } from './requests/requests.module';
+import { NotificationsModule } from './notifications/notifications.module';
 
 @Module({
   imports: [
@@ -50,6 +51,7 @@ import { RequestsModule } from './requests/requests.module';
     CategoriesModule,
     FileUploadModule,
     RequestsModule,
+    NotificationsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
