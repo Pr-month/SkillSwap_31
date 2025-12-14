@@ -9,6 +9,7 @@ import {
   UseGuards,
   Req,
   ForbiddenException,
+  HttpCode
 } from '@nestjs/common';
 import { CategoriesService } from './categories.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
@@ -54,15 +55,33 @@ export class CategoriesController {
   }
 
   @Patch(':id')
+  @UseGuards(JwtAccessGuard)
   update(
     @Param('id') id: string,
     @Body() updateCategoryDto: UpdateCategoryDto,
-  ) {
+    @Req() req: AuthRequest,
+  ): Promise<Category> {
+    const user = req.user;
+
+    if (user.role !== Role.Admin) {
+      throw new ForbiddenException('Недостаточно прав');
+    }
+
     return this.categoriesService.update(id, updateCategoryDto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
+  @UseGuards(JwtAccessGuard)
+  @HttpCode(204)
+  async remove(
+    @Param('id') id: string,
+    @Req() req: AuthRequest,
+  ): Promise<void> {
+    const user = req.user;
+
+    if (user.role !== Role.Admin) {
+      throw new ForbiddenException('Недостаточно прав');
+    }
     return this.categoriesService.remove(id);
   }
 }
