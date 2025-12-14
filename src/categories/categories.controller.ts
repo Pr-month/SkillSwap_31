@@ -17,6 +17,7 @@ import { UpdateCategoryDto } from './dto/update-category.dto';
 import { Category } from './entities/category.entity';
 import { Role } from 'src/users/enum';
 import { JwtAccessGuard } from 'src/auth/guards/jwt-access.guard';
+import { ApiTags } from '@nestjs/swagger';
 
 type AuthRequest = Request & {
   user: {
@@ -25,6 +26,7 @@ type AuthRequest = Request & {
   };
 };
 
+@ApiTags('categories')
 @Controller('categories')
 export class CategoriesController {
   constructor(private readonly categoriesService: CategoriesService) {}

@@ -22,6 +22,7 @@ import { JwtAccessGuard } from 'src/auth/guards/jwt-access.guard';
 import { Skill } from './entities/skill.entity';
 import { User } from 'src/users/entities/user.entity';
 import { FindSkillsDto } from './dto/find-skills.dto';
+import { ApiTags } from '@nestjs/swagger';
 
 interface RequestWithUser extends Request {
   user: {
@@ -31,6 +32,7 @@ interface RequestWithUser extends Request {
   };
 }
 
+@ApiTags('skills')
 @Controller('skills')
 export class SkillsController {
   constructor(private readonly skillsService: SkillsService) {}
