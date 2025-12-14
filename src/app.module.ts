@@ -17,6 +17,7 @@ import { WinstonModule } from 'nest-winston';
 import { FileUploadModule } from './file-upload/file-upload.module';
 import { RequestsModule } from './requests/requests.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { SeedingModule } from './seeding/seeding.module';
 
 @Module({
   imports: [
@@ -52,6 +53,7 @@ import { NotificationsModule } from './notifications/notifications.module';
     FileUploadModule,
     RequestsModule,
     NotificationsModule,
+    SeedingModule
   ],
   controllers: [AppController],
   providers: [AppService],
