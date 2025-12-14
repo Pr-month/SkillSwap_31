@@ -13,12 +13,8 @@ import { RequestsService } from './requests.service';
 import { CreateRequestDto } from './dto/create-request.dto';
 import { JwtAccessGuard } from 'src/auth/guards/jwt-access.guard';
 import { Request as ExchangeRequest } from './entities/request.entity';
-import { Request } from 'express';
 import { UpdateRequestDto } from './dto/update-request.dto';
-
-type AuthRequest = Request & {
-  user: { id: string };
-};
+import { TRequestWithUser } from 'src/auth/auth.types';
 
 @Controller('requests')
 @UseGuards(JwtAccessGuard)
@@ -29,20 +25,20 @@ export class RequestsController {
   @Post()
   create(
     @Body() dto: CreateRequestDto,
-    @Req() req: AuthRequest,
+    @Req() req: TRequestWithUser,
   ): Promise<ExchangeRequest> {
     return this.requestsService.create(dto, req.user.id);
   }
 
   // GET /requests/incoming
   @Get('incoming')
-  findIncoming(@Req() req: AuthRequest): Promise<ExchangeRequest[]> {
+  findIncoming(@Req() req: TRequestWithUser): Promise<ExchangeRequest[]> {
     return this.requestsService.findIncoming(req.user.id);
   }
 
   // GET /requests/outgoing
   @Get('outgoing')
-  findOutgoing(@Req() req: AuthRequest): Promise<ExchangeRequest[]> {
+  findOutgoing(@Req() req: TRequestWithUser): Promise<ExchangeRequest[]> {
     return this.requestsService.findOutgoing(req.user.id);
   }
 
@@ -51,7 +47,7 @@ export class RequestsController {
   updateStatus(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateRequestDto,
-    @Req() req: AuthRequest,
+    @Req() req: TRequestWithUser,
   ): Promise<ExchangeRequest> {
     return this.requestsService.updateStatus(id, dto, req.user.id);
   }
