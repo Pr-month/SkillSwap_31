@@ -22,15 +22,8 @@ import { JwtAccessGuard } from 'src/auth/guards/jwt-access.guard';
 import { Skill } from './entities/skill.entity';
 import { User } from 'src/users/entities/user.entity';
 import { FindSkillsDto } from './dto/find-skills.dto';
+import { TRequestWithUser } from 'src/auth/auth.types';
 import { ApiTags } from '@nestjs/swagger';
-
-interface RequestWithUser extends Request {
-  user: {
-    id: string;
-    name: string;
-    email: string;
-  };
-}
 
 @ApiTags('skills')
 @Controller('skills')
@@ -41,7 +34,7 @@ export class SkillsController {
   @UseGuards(JwtAccessGuard)
   async create(
     @Body() createSkillDto: CreateSkillDto,
-    @Req() req,
+    @Req() req: TRequestWithUser,
   ): Promise<Skill> {
     return await this.skillsService.create(createSkillDto, {
       id: req.user.id,
@@ -64,7 +57,7 @@ export class SkillsController {
   async update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateSkillDto: UpdateSkillDto,
-    @Req() req,
+    @Req() req: TRequestWithUser,
   ) {
     return this.skillsService.update(id, updateSkillDto, req.user.id);
   }
@@ -72,7 +65,10 @@ export class SkillsController {
   @Delete(':id')
   @UseGuards(JwtAccessGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
-  async remove(@Param('id', ParseUUIDPipe) id: string, @Req() req) {
+  async remove(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() req: TRequestWithUser,
+  ) {
     await this.skillsService.remove(id, req.user.id);
   }
 
@@ -80,9 +76,19 @@ export class SkillsController {
   @UseGuards(JwtAccessGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   async addToFavorites(
-    @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
-    @Req() req: RequestWithUser,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() req: TRequestWithUser,
   ): Promise<void> {
-    await this.skillsService.addToFavorites(id, req.user.email);
+    await this.skillsService.addToFavorites(id, req.user.id);
+  }
+
+  @Delete(':id/favorite')
+  @UseGuards(JwtAccessGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async removeFromFavorites(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() req: TRequestWithUser,
+  ): Promise<void> {
+    await this.skillsService.removeFromFavorites(id, req.user.id);
   }
 }

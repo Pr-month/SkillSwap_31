@@ -18,6 +18,7 @@ import * as path from 'path';
 @Injectable()
 export class SkillsService {
   private uploadPath = path.join(__dirname, '..', '..', 'public', 'uploads');
+
   constructor(
     @InjectRepository(Skill)
     private skillsRepository: Repository<Skill>,
@@ -170,10 +171,9 @@ export class SkillsService {
   }
 
   //добавление навыка в избранное
-  async addToFavorites(skillId: string, userEmail: string): Promise<void> {
+  async addToFavorites(skillId: string, userId: string): Promise<void> {
     const skill = await this.skillsRepository.findOne({
       where: { id: skillId },
-      relations: ['favoritedBy'],
     });
 
     if (!skill) {
@@ -181,7 +181,7 @@ export class SkillsService {
     }
 
     const user = await this.usersRepository.findOne({
-      where: { email: userEmail },
+      where: { id: userId },
       relations: ['favoriteSkills'],
     });
 
@@ -189,15 +189,32 @@ export class SkillsService {
       throw new NotFoundException('Пользователь не найден');
     }
 
-    const isAlreadyFavorite = user.favoriteSkills.some(
-      (favSkill) => favSkill.id === skillId,
-    );
+    user.favoriteSkills = user.favoriteSkills ?? [];
 
-    if (isAlreadyFavorite) {
+    const isAlreadyFavorite = user.favoriteSkills.some((s) => s.id === skillId);
+    if (isAlreadyFavorite)
       throw new ConflictException('Навык уже добавлен в избранное');
-    }
 
     user.favoriteSkills.push(skill);
+    await this.usersRepository.save(user);
+  }
+
+  // Удаление навыка из избранного
+  async removeFromFavorites(skillId: string, userId: string): Promise<void> {
+    const user = await this.usersRepository.findOne({
+      where: { id: userId },
+      relations: ['favoriteSkills'],
+    });
+
+    if (!user) {
+      throw new NotFoundException('Пользователь не найден');
+    }
+    user.favoriteSkills = user.favoriteSkills ?? [];
+
+    const hasSkill = user.favoriteSkills.some((s) => s.id === skillId);
+    if (!hasSkill) throw new NotFoundException('Навык не найден в избранном');
+
+    user.favoriteSkills = user.favoriteSkills.filter((s) => s.id !== skillId);
     await this.usersRepository.save(user);
   }
 }

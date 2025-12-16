@@ -1,26 +1,137 @@
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { In, Repository } from 'typeorm';
+import { Request } from './entities/request.entity';
+import { Skill } from 'src/skills/entities/skill.entity';
 import { CreateRequestDto } from './dto/create-request.dto';
+import { RequestStatus } from './enum';
 import { UpdateRequestDto } from './dto/update-request.dto';
 
 @Injectable()
 export class RequestsService {
-  create(createRequestDto: CreateRequestDto) {
-    return 'This action adds a new request';
+  constructor(
+    @InjectRepository(Request)
+    private readonly requestsRepository: Repository<Request>,
+
+    @InjectRepository(Skill)
+    private readonly skillsRepository: Repository<Skill>,
+  ) {}
+
+  // POST
+  async create(dto: CreateRequestDto, currentUserId: string): Promise<Request> {
+    const offeredSkill = await this.skillsRepository.findOne({
+      where: { id: dto.offeredSkillId },
+      relations: ['owner'],
+    });
+
+    if (!offeredSkill) {
+      throw new NotFoundException('Предлагаемый навык не найден');
+    }
+
+    if (!offeredSkill.owner) {
+      throw new BadRequestException(
+        'У предлагаемого навыка не указан владелец',
+      );
+    }
+
+    if (offeredSkill.owner.id !== currentUserId) {
+      throw new ForbiddenException(
+        'Вы можете отправлять заявки только от своих навыков',
+      );
+    }
+
+    const requestedSkill = await this.skillsRepository.findOne({
+      where: { id: dto.requestedSkillId },
+      relations: ['owner'],
+    });
+
+    if (!requestedSkill) {
+      throw new NotFoundException('Запрашиваемый навык не найден');
+    }
+
+    if (!requestedSkill.owner) {
+      throw new BadRequestException(
+        'У запрашиваемого навыка не указан владелец',
+      );
+    }
+
+    const sender = offeredSkill.owner;
+    const receiver = requestedSkill.owner;
+
+    const request = this.requestsRepository.create({
+      sender,
+      receiver,
+      offeredSkill,
+      requestedSkill,
+      status: RequestStatus.Pending,
+      isRead: false,
+    });
+
+    return this.requestsRepository.save(request);
   }
 
-  findAll() {
-    return `This action returns all requests`;
+  //GET /requests/incoming
+  async findIncoming(currentUserId: string): Promise<Request[]> {
+    return this.requestsRepository.find({
+      where: {
+        receiver: { id: currentUserId },
+        status: In([RequestStatus.Pending, RequestStatus.InProgress]),
+      },
+      relations: ['sender', 'receiver', 'offeredSkill', 'requestedSkill'],
+      order: { createdAt: 'DESC' },
+    });
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} request`;
+  // GET /requests/outgoing
+  async findOutgoing(currentUserId: string): Promise<Request[]> {
+    return this.requestsRepository.find({
+      where: {
+        sender: { id: currentUserId },
+        status: In([RequestStatus.Pending, RequestStatus.InProgress]),
+      },
+      relations: ['sender', 'receiver', 'offeredSkill', 'requestedSkill'],
+      order: { createdAt: 'DESC' },
+    });
   }
 
-  update(id: number, updateRequestDto: UpdateRequestDto) {
-    return `This action updates a #${id} request`;
-  }
+  // PATCH /requests/:id
+  async updateStatus(
+    id: string,
+    dto: UpdateRequestDto,
+    currentUserId: string,
+  ): Promise<Request> {
+    const request = await this.requestsRepository.findOne({
+      where: { id },
+      relations: ['receiver'],
+    });
 
-  remove(id: number) {
-    return `This action removes a #${id} request`;
+    if (!request) {
+      throw new NotFoundException('Заявка не найдена');
+    }
+
+    // обновлять может только получатель
+    if (request.receiver.id !== currentUserId) {
+      throw new ForbiddenException('Можно обновлять только входящие заявки');
+    }
+
+    // разрешаем только accepted / rejected
+    if (
+      dto.status !== RequestStatus.Accepted &&
+      dto.status !== RequestStatus.Rejected
+    ) {
+      throw new BadRequestException(
+        'Обновлять статус можно только на accepted или rejected',
+      );
+    }
+
+    request.status = dto.status;
+    request.isRead = true;
+
+    return this.requestsRepository.save(request);
   }
 }
