@@ -15,7 +15,9 @@ import { JwtAccessGuard } from 'src/auth/guards/jwt-access.guard';
 import { Request as ExchangeRequest } from './entities/request.entity';
 import { UpdateRequestDto } from './dto/update-request.dto';
 import { TRequestWithUser } from 'src/auth/auth.types';
+import { ApiTags } from '@nestjs/swagger';
 
+@ApiTags('requests')
 @Controller('requests')
 @UseGuards(JwtAccessGuard)
 export class RequestsController {

@@ -23,15 +23,9 @@ import { Skill } from './entities/skill.entity';
 import { User } from 'src/users/entities/user.entity';
 import { FindSkillsDto } from './dto/find-skills.dto';
 import { TRequestWithUser } from 'src/auth/auth.types';
+import { ApiTags } from '@nestjs/swagger';
 
-// interface RequestWithUser extends Request {
-//   user: {
-//     id: string;
-//     name: string;
-//     email: string;
-//   };
-// }
-
+@ApiTags('skills')
 @Controller('skills')
 export class SkillsController {
   constructor(private readonly skillsService: SkillsService) {}

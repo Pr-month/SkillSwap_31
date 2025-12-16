@@ -143,7 +143,7 @@ export class UsersService {
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-    await this.usersRepository.update(userId, {
+    await this.usersRepository.update({ id: userId }, {
       password: hashedPassword,
     });
   }
@@ -157,9 +157,10 @@ export class UsersService {
       throw new NotFoundException('Пользователь не найден');
     }
 
-    await this.usersRepository.update(id, updateUserDto);
-
-    return await this.findById(id);
+    return await this.usersRepository.save({
+      ...existingUser,
+      ...updateUserDto
+    });
   }
 
   remove(id: number) {
