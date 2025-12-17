@@ -4,12 +4,13 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
-import { Request } from './entities/request.entity';
-import { Skill } from 'src/skills/entities/skill.entity';
 import { CreateRequestDto } from './dto/create-request.dto';
+import { In, Repository } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
+import { NotificationsGateway } from 'src/notifications/notifications.gateway';
+import { Request } from './entities/request.entity';
 import { RequestStatus } from './enum';
+import { Skill } from 'src/skills/entities/skill.entity';
 import { UpdateRequestDto } from './dto/update-request.dto';
 
 @Injectable()
@@ -20,6 +21,8 @@ export class RequestsService {
 
     @InjectRepository(Skill)
     private readonly skillsRepository: Repository<Skill>,
+
+    private readonly notificationsGateway: NotificationsGateway,
   ) {}
 
   // POST
@@ -47,7 +50,7 @@ export class RequestsService {
 
     const requestedSkill = await this.skillsRepository.findOne({
       where: { id: dto.requestedSkillId },
-      relations: ['owner'],
+      relations: ['owner', 'category'],
     });
 
     if (!requestedSkill) {
@@ -72,7 +75,19 @@ export class RequestsService {
       isRead: false,
     });
 
-    return this.requestsRepository.save(request);
+    const savedRequest = await this.requestsRepository.save(request);
+
+    // Отправляем уведомление получателю заявки
+    this.notificationsGateway.notifyNewRequest(receiver.id, {
+      skillName: requestedSkill.category.name,
+      fromUser: {
+        id: sender.id,
+        name: sender.name,
+      },
+      requestId: savedRequest.id,
+    });
+
+    return savedRequest;
   }
 
   //GET /requests/incoming
@@ -107,7 +122,14 @@ export class RequestsService {
   ): Promise<Request> {
     const request = await this.requestsRepository.findOne({
       where: { id },
-      relations: ['receiver'],
+      relations: [
+        'offeredSkill.category',
+        'offeredSkill',
+        'receiver',
+        'requestedSkill.category',
+        'requestedSkill',
+        'sender',
+      ],
     });
 
     if (!request) {
@@ -132,6 +154,30 @@ export class RequestsService {
     request.status = dto.status;
     request.isRead = true;
 
-    return this.requestsRepository.save(request);
+    const updatedRequest = await this.requestsRepository.save(request);
+
+    // Отправляем уведомление отправителю заявки
+    const notificationPayload = {
+      skillName: request.offeredSkill.category.name,
+      fromUser: {
+        id: request.receiver.id,
+        name: request.receiver.name,
+      },
+      requestId: request.id,
+    };
+
+    if (dto.status === RequestStatus.Accepted) {
+      this.notificationsGateway.notifyRequestAccepted(
+        request.sender.id,
+        notificationPayload,
+      );
+    } else if (dto.status === RequestStatus.Rejected) {
+      this.notificationsGateway.notifyRequestRejected(
+        request.sender.id,
+        notificationPayload,
+      );
+    }
+
+    return updatedRequest;
   }
 }
