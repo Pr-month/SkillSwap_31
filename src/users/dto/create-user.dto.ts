@@ -1,15 +1,17 @@
+import { Gender, Role } from '../enum';
 import {
-  IsEmail,
-  IsString,
-  IsOptional,
-  MinLength,
-  MaxLength,
-  IsEnum,
+  IsArray,
   IsDate,
+  IsEmail,
+  IsEnum,
+  IsOptional,
+  IsString,
   IsUrl,
+  IsUUID,
+  MaxLength,
+  MinLength,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { Gender, Role } from '../enum';
 
 export class CreateUserDto {
   @IsString()
@@ -50,4 +52,9 @@ export class CreateUserDto {
   @IsOptional()
   @IsEnum(Role)
   role?: Role;
+
+  @IsOptional()
+  @IsArray()
+  @IsUUID('4', { each: true })
+  wantToLearnCategoryIds?: string[];
 }
