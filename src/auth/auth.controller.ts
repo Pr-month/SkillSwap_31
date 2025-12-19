@@ -1,9 +1,10 @@
+import { ApiTags } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
-import { Body, Controller, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Post, Req, UseGuards } from '@nestjs/common';
 import { CreateUserDto } from '../users/dto/create-user.dto';
 import { JwtRefreshGuard } from './guards/jwt-refresh.guard';
 import { LoginAuthDto } from './dto/login-auth.dto';
-import { ApiTags } from '@nestjs/swagger';
+import { TRequestWithUser } from './auth.types';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -22,8 +23,14 @@ export class AuthController {
 
   @UseGuards(JwtRefreshGuard)
   @Post('refresh')
-  refresh(@Body('refreshToken') refreshToken: string) {
-    return this.authService.refresh(refreshToken);
+  refresh(@Req() { user }: TRequestWithUser) {
+    const payload = {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+    };
+    return this.authService.refresh(payload);
   }
 
   @UseGuards(JwtRefreshGuard)

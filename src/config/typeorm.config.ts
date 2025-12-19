@@ -3,7 +3,8 @@ import { ConfigType, registerAs } from '@nestjs/config';
 import { DataSource, DataSourceOptions } from 'typeorm';
 import * as dotenv from 'dotenv';
 
-dotenv.config();
+const envFile = process.env.NODE_ENV === 'test' ? '.env.test' : '.env';
+dotenv.config({ path: envFile });
 
 // Базовый конфиг (без NestJS-специфичных опций)
 const baseConfig = {
@@ -12,7 +13,10 @@ const baseConfig = {
   port: Number(process.env.DB_PORT) || 5432,
   username: process.env.DB_USERNAME || 'postgres',
   password: process.env.DB_PASSWORD || 'postgres',
-  database: process.env.DB_NAME || 'skillswap',
+  database:
+    process.env.NODE_ENV === 'test'
+      ? process.env.DB_TEST_NAME || 'skillswap_test'
+      : process.env.DB_NAME || 'skillswap',
   synchronize: process.env.NODE_ENV !== 'production',
   logging: process.env.DB_LOGGING === 'true',
 };
