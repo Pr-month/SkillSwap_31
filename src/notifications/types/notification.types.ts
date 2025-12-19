@@ -20,8 +20,8 @@ export interface NotificationPayload {
   requestId?: string;
 }
 
-export interface ISocketData {
-  user?: TJwtPayload;
+export interface IAuthenticatedSocket extends Socket {
+  data: {
+    user?: TJwtPayload;
+  };
 }
-
-export type TAuthenticatedSocket = Socket<any, any, any, ISocketData>;

@@ -5,20 +5,20 @@ import {
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
-import { Inject, Logger, UseGuards } from '@nestjs/common';
 import {
+  IAuthenticatedSocket,
   NotificationPayload,
   NotificationType,
-  TAuthenticatedSocket,
 } from './types/notification.types';
-import { Server } from 'socket.io';
-import { TWsConfig, websocketConfig } from '../config/websocket.config';
+import { Logger } from '@nestjs/common';
+import { Server, Socket } from 'socket.io';
+import { websocketConfig } from '../config/websocket.config';
 import { WsJwtGuard } from './guards/ws-jwt.guard';
 
 @WebSocketGateway({
+  port: websocketConfig().port,
   cors: websocketConfig().cors,
 })
-@UseGuards(WsJwtGuard)
 export class NotificationsGateway
   implements OnGatewayConnection, OnGatewayDisconnect
 {
@@ -27,32 +27,31 @@ export class NotificationsGateway
 
   private readonly logger = new Logger(NotificationsGateway.name);
 
-  constructor(
-    @Inject(websocketConfig.KEY)
-    private readonly wsConfig: TWsConfig,
-  ) {}
+  constructor(private readonly wsJwtGuard: WsJwtGuard) {}
 
-  async handleConnection(@ConnectedSocket() client: TAuthenticatedSocket) {
+  async handleConnection(@ConnectedSocket() client: Socket) {
     try {
-      // Получаем пользователя из данных клиента (установлено в WsJwtGuard)
-      const user = client.data.user;
+      // Проверяем токен и получаем аутентифицированного клиента
+      const authenticatedClient = this.wsJwtGuard.verify(client);
+      const user = authenticatedClient.data.user;
 
+      // Проверяем, что пользователь определён
       if (!user) {
-        this.logger.warn('Подключение отклонено: нет авторизации');
+        this.logger.warn('Подключение отклонено: пользователь не найден');
         client.disconnect();
         return;
       }
 
       // Присоединяем пользователя к комнате с его ID
       const roomId = user.id;
-      await client.join(roomId);
+      await authenticatedClient.join(roomId);
 
       this.logger.log(
         `Пользователь ${user.name} (ID: ${user.id}) подключился к комнате ${roomId}`,
       );
 
       // Опционально: отправляем подтверждение подключения
-      client.emit('connected', {
+      authenticatedClient.emit('connected', {
         message: 'Успешно подключено к уведомлениям',
         userId: user.id,
       });
@@ -62,10 +61,12 @@ export class NotificationsGateway
     }
   }
 
-  handleDisconnect(@ConnectedSocket() client: TAuthenticatedSocket) {
+  handleDisconnect(@ConnectedSocket() client: IAuthenticatedSocket) {
     const user = client.data.user;
     if (user) {
       this.logger.log(`Пользователь ${user.name} (ID: ${user.id}) отключился`);
+    } else {
+      this.logger.log('Неаутентифицированный клиент отключился');
     }
   }
 

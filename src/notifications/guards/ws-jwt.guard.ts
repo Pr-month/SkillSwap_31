@@ -1,26 +1,21 @@
-import {
-  CanActivate,
-  ExecutionContext,
-  Inject,
-  Injectable,
-} from '@nestjs/common';
+import { IAuthenticatedSocket } from '../types/notification.types';
+import { Inject, Injectable } from '@nestjs/common';
 import { jwtConfig, TJwtConfig } from '../../config/jwt.config';
 import { JwtService } from '@nestjs/jwt';
-import { TAuthenticatedSocket } from '../types/notification.types';
+import { Socket } from 'socket.io';
 import { TJwtPayload } from '../../auth/auth.types';
 import { WsException } from '@nestjs/websockets';
 
 @Injectable()
-export class WsJwtGuard implements CanActivate {
+export class WsJwtGuard {
   constructor(
     private readonly jwtService: JwtService,
     @Inject(jwtConfig.KEY)
     private readonly config: TJwtConfig,
   ) {}
 
-  canActivate(context: ExecutionContext): boolean {
+  verify(client: Socket): IAuthenticatedSocket {
     try {
-      const client: TAuthenticatedSocket = context.switchToWs().getClient();
       const token = client.handshake.query?.token as string;
 
       if (!token) {
@@ -33,9 +28,9 @@ export class WsJwtGuard implements CanActivate {
       });
 
       // Сохраняем payload в данных клиента для дальнейшего использования
-      client.data.user = payload;
+      (client as IAuthenticatedSocket).data.user = payload;
 
-      return true;
+      return client;
     } catch {
       throw new WsException('Недействительный токен');
     }
