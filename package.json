@@ -21,7 +21,7 @@
     "start": "nest start",
     "test:cov": "npm run test:reset && jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "npm run test:reset && jest --config ./test/jest-e2e.json",
+    "test:e2e": "npm run test:reset && cross-env NODE_ENV=test npm run seed:run && jest --config ./test/jest-e2e.json",
     "test:reset": "cross-env NODE_ENV=test npm run schema:drop",
     "test:watch": "jest --watch",
     "test": "npm run test:reset && jest",
