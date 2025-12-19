@@ -104,20 +104,12 @@ export class AuthService {
     };
   }
 
-  async refresh(refreshToken: string) {
-    try {
-      const payload = this.jwtService.verify<TJwtPayload>(refreshToken, {
-        secret: this.config.refreshSecret,
-      });
+  async refresh(payload: TJwtPayload) {
+    const tokens = await this.generateTokens(payload);
 
-      const tokens = await this.generateTokens(payload);
-
-      return {
-        accessToken: tokens.accessToken,
-      };
-    } catch {
-      throw new UnauthorizedException('Invalid or expired refresh token');
-    }
+    return {
+      accessToken: tokens.accessToken,
+    };
   }
 
   private async generateTokens(
