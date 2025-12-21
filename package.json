@@ -14,6 +14,7 @@
     "seed:clear": "nest run seed clear",
     "seed:run": "ts-node -r tsconfig-paths/register src/seeding/run-seed.ts",
     "seed:users": "ts-node -r tsconfig-paths/register src/seeding/run-users.ts",
+    "seed:admin": "ts-node -r tsconfig-paths/register src/seeding/run-admin.ts",
     "seed": "nest run seed",
     "start:debug": "nest start --debug --watch",
     "start:dev": "nest start --watch",

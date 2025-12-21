@@ -32,7 +32,7 @@ export class UsersSeeder {
           email: userData.email,
           password: hashedPassword,
           gender: userData.gender as Gender,
-          role: userData.role as Role,
+          role: 'USER' as Role,
           skills: userData.skills || [],
           favoriteSkills: userData.favoriteSkills || [],
         });
