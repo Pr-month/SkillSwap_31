@@ -7,8 +7,6 @@ import {
   Param,
   Delete,
   UseGuards,
-  Req,
-  ForbiddenException,
   HttpCode
 } from '@nestjs/common';
 import { CategoriesService } from './categories.service';
@@ -17,14 +15,9 @@ import { UpdateCategoryDto } from './dto/update-category.dto';
 import { Category } from './entities/category.entity';
 import { Role } from 'src/users/enum';
 import { JwtAccessGuard } from 'src/auth/guards/jwt-access.guard';
+import { RolesGuard } from 'src/auth/guards/roles.guard';
+import { Roles } from 'src/auth/decorators/roles.decorator';
 import { ApiTags } from '@nestjs/swagger';
-
-type AuthRequest = Request & {
-  user: {
-    id: string;
-    role: Role;
-  };
-};
 
 @ApiTags('categories')
 @Controller('categories')
@@ -32,17 +25,11 @@ export class CategoriesController {
   constructor(private readonly categoriesService: CategoriesService) {}
 
   @Post()
-  @UseGuards(JwtAccessGuard)
+  @UseGuards(JwtAccessGuard, RolesGuard)
+  @Roles(Role.Admin)
   create(
-    @Body() createCategoryDto: CreateCategoryDto,
-    @Req() req: AuthRequest,
+    @Body() createCategoryDto: CreateCategoryDto
   ): Promise<Category> {
-    const user = req.user;
-
-    if (user.role !== Role.Admin) {
-      throw new ForbiddenException('Недостаточно прав');
-    }
-
     return this.categoriesService.create(createCategoryDto);
   }
 
@@ -57,33 +44,22 @@ export class CategoriesController {
   }
 
   @Patch(':id')
-  @UseGuards(JwtAccessGuard)
+  @UseGuards(JwtAccessGuard, RolesGuard)
+  @Roles(Role.Admin)
   update(
     @Param('id') id: string,
     @Body() updateCategoryDto: UpdateCategoryDto,
-    @Req() req: AuthRequest,
   ): Promise<Category> {
-    const user = req.user;
-
-    if (user.role !== Role.Admin) {
-      throw new ForbiddenException('Недостаточно прав');
-    }
-
     return this.categoriesService.update(id, updateCategoryDto);
   }
 
   @Delete(':id')
-  @UseGuards(JwtAccessGuard)
+  @UseGuards(JwtAccessGuard, RolesGuard)
+  @Roles(Role.Admin)
   @HttpCode(204)
   async remove(
-    @Param('id') id: string,
-    @Req() req: AuthRequest,
+    @Param('id') id: string
   ): Promise<void> {
-    const user = req.user;
-
-    if (user.role !== Role.Admin) {
-      throw new ForbiddenException('Недостаточно прав');
-    }
     return this.categoriesService.remove(id);
   }
 }
