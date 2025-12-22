@@ -5,14 +5,10 @@ import { JwtAccessStrategy } from './strategies/jwt-access.strategy';
 import { jwtConfig } from '../config/jwt.config';
 import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy';
 import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { User } from '../users/entities/user.entity';
+import { UsersModule } from '../users/users.module';
 
 @Module({
-  imports: [
-    ConfigModule.forFeature(jwtConfig),
-    TypeOrmModule.forFeature([User]),
-  ],
+  imports: [ConfigModule.forFeature(jwtConfig), UsersModule],
   controllers: [AuthController],
   providers: [AuthService, JwtAccessStrategy, JwtRefreshStrategy],
 })

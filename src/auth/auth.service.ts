@@ -1,12 +1,10 @@
 import { CreateUserDto } from '../users/dto/create-user.dto';
 import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { jwtConfig, TJwtConfig } from 'src/config/jwt.config';
 import { JwtService } from '@nestjs/jwt';
 import { LoginAuthDto } from './dto/login-auth.dto';
 import { TJwtPayload } from './auth.types';
-import { Repository } from 'typeorm';
-import { User } from '../users/entities/user.entity';
+import { UsersService } from '../users/users.service';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
@@ -15,14 +13,13 @@ export class AuthService {
     private readonly jwtService: JwtService,
     @Inject(jwtConfig.KEY)
     private readonly config: TJwtConfig,
-    @InjectRepository(User)
-    private readonly usersRepository: Repository<User>,
+    private readonly usersService: UsersService,
   ) {}
 
   async login(loginDto: LoginAuthDto) {
     const { email, password } = loginDto;
 
-    const user = await this.usersRepository.findOne({ where: { email } });
+    const user = await this.usersService.findByEmail(email);
     if (!user) {
       throw new UnauthorizedException('Неверный email или пароль');
     }
@@ -39,9 +36,7 @@ export class AuthService {
       role: user.role,
     });
 
-    await this.usersRepository.update(user.id, {
-      refreshToken: tokens.refreshToken,
-    });
+    await this.usersService.updateRefreshToken(user.id, tokens.refreshToken);
 
     return {
       user: { name: user.name, email: user.email },
@@ -61,35 +56,14 @@ export class AuthService {
       return;
     }
 
-    const user = await this.usersRepository.findOne({
-      where: { email: payload.email },
-    });
+    const user = await this.usersService.findByEmail(payload.email);
     if (user) {
-      await this.usersRepository.update(user.id, {
-        refreshToken: undefined,
-      });
+      await this.usersService.updateRefreshToken(user.id, null);
     }
   }
 
   async register(registerDto: CreateUserDto) {
-    const { email, password, ...rest } = registerDto;
-
-    const existingUser = await this.usersRepository.findOne({
-      where: { email },
-    });
-    if (existingUser) {
-      throw new UnauthorizedException(
-        'Пользователь с таким email уже существует',
-      );
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const user = this.usersRepository.create({
-      ...rest,
-      email,
-      password: hashedPassword,
-    });
-    await this.usersRepository.save(user);
+    const user = await this.usersService.create(registerDto);
 
     const tokens = await this.generateTokens({
       id: user.id,

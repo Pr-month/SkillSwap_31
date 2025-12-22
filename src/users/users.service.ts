@@ -2,37 +2,83 @@ import {
   Injectable,
   NotFoundException,
   UnauthorizedException,
+  ConflictException,
 } from '@nestjs/common';
-// import { CreateUserDto } from './dto/create-user.dto';
-import { User } from './entities/user.entity';
+import { Category } from '../categories/entities/category.entity';
+import { CreateUserDto } from './dto/create-user.dto';
+import { GetUsersQueryDto } from './dto/get-users-query.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import * as bcrypt from 'bcrypt';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { GetUsersQueryDto } from './dto/get-users-query.dto';
+import { User } from './entities/user.entity';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User)
     private usersRepository: Repository<User>,
+    @InjectRepository(Category)
+    private categoriesRepository: Repository<Category>,
   ) {}
 
-  async findByEmail(email: string): Promise<User | null> {
-    return this.usersRepository.findOne({ where: { email } });
+  async changePassword(
+    userId: string,
+    oldPassword: string,
+    newPassword: string,
+  ): Promise<void> {
+    const user = await this.usersRepository.findOne({
+      where: { id: userId },
+      select: ['id', 'password'],
+    });
+
+    if (!user) {
+      throw new NotFoundException('Пользователь не найден');
+    }
+
+    const isPasswordValid = await bcrypt.compare(oldPassword, user.password);
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Неправильный текущий пароль');
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    await this.usersRepository.update(
+      { id: userId },
+      {
+        password: hashedPassword,
+      },
+    );
   }
 
-  async createUser(data: {
-    name: string;
-    email: string;
-    password: string;
-  }): Promise<User> {
-    const user = this.usersRepository.create(data);
-    return this.usersRepository.save(user);
-  }
+  async create(createUserDto: CreateUserDto): Promise<User> {
+    const { email, password, wantToLearnCategoryIds, ...rest } = createUserDto;
 
-  create() {
-    return 'This action adds a new user';
+    const existingUser = await this.usersRepository.findOne({
+      where: { email },
+    });
+    if (existingUser) {
+      throw new ConflictException('Пользователь с таким email уже существует');
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const user = this.usersRepository.create({
+      ...rest,
+      email,
+      password: hashedPassword,
+    });
+
+    if (wantToLearnCategoryIds && wantToLearnCategoryIds.length > 0) {
+      const categories = await this.categoriesRepository.findByIds(
+        wantToLearnCategoryIds,
+      );
+      if (categories.length !== wantToLearnCategoryIds.length) {
+        throw new NotFoundException('Одна или несколько категорий не найдены');
+      }
+      user.wantToLearn = categories;
+    }
+
+    return await this.usersRepository.save(user);
   }
 
   async findAll(
@@ -97,6 +143,10 @@ export class UsersService {
     return { users, total };
   }
 
+  async findByEmail(email: string): Promise<User | null> {
+    return this.usersRepository.findOne({ where: { email } });
+  }
+
   async findById(id: string): Promise<User> {
     const user = await this.usersRepository.findOne({
       where: { id },
@@ -122,30 +172,8 @@ export class UsersService {
     return user;
   }
 
-  async changePassword(
-    userId: string,
-    oldPassword: string,
-    newPassword: string,
-  ): Promise<void> {
-    const user = await this.usersRepository.findOne({
-      where: { id: userId },
-      select: ['id', 'password'],
-    });
-
-    if (!user) {
-      throw new NotFoundException('Пользователь не найден');
-    }
-
-    const isPasswordValid = await bcrypt.compare(oldPassword, user.password);
-    if (!isPasswordValid) {
-      throw new UnauthorizedException('Неправильный текущий пароль');
-    }
-
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
-
-    await this.usersRepository.update({ id: userId }, {
-      password: hashedPassword,
-    });
+  remove(id: number) {
+    return `This action removes a #${id} user`;
   }
 
   async update(id: string, updateUserDto: UpdateUserDto): Promise<User> {
@@ -159,11 +187,16 @@ export class UsersService {
 
     return await this.usersRepository.save({
       ...existingUser,
-      ...updateUserDto
+      ...updateUserDto,
     });
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} user`;
+  async updateRefreshToken(
+    userId: string,
+    refreshToken: string | null,
+  ): Promise<void> {
+    await this.usersRepository.update(userId, {
+      refreshToken: refreshToken ?? undefined,
+    });
   }
 }

@@ -1,19 +1,19 @@
-import { ChangePasswordDto } from './dto/change-password.dto';
+import { ApiTags } from '@nestjs/swagger';
 import {
-  Controller,
-  Get,
-  Post,
   Body,
-  Patch,
-  Param,
+  Controller,
   Delete,
-  UseGuards,
-  Request,
+  Get,
   HttpCode,
   HttpStatus,
+  Param,
   ParseUUIDPipe,
+  Patch,
   Query,
+  Request,
+  UseGuards,
 } from '@nestjs/common';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { GetUsersQueryDto } from './dto/get-users-query.dto';
 import { JwtAccessGuard } from 'src/auth/guards/jwt-access.guard';
 import { TRequestWithUser } from 'src/auth/auth.types';
@@ -21,19 +21,11 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { UserResponseDto } from './dto/user-response.dto';
 import { UsersListResponseDto } from './dto/users-list-response.dto';
 import { UsersService } from './users.service';
-// import { CreateUserDto } from './dto/create-user.dto';
-// import { UpdateUserDto } from './dto/update-user.dto';
-import { ApiTags } from '@nestjs/swagger';
 
 @ApiTags('users')
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
-
-  @Post()
-  create() {
-    return this.usersService.create();
-  }
 
   @Get()
   async findAll(
