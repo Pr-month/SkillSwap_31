@@ -12,6 +12,7 @@ import { Request } from './entities/request.entity';
 import { RequestStatus } from './enum';
 import { Skill } from 'src/skills/entities/skill.entity';
 import { UpdateRequestDto } from './dto/update-request.dto';
+import { Role } from 'src/users/enum';
 
 @Injectable()
 export class RequestsService {
@@ -179,5 +180,29 @@ export class RequestsService {
     }
 
     return updatedRequest;
+  }
+
+  // DELETE /requests/:id
+  async remove(
+    id: string,
+    currentUserId: string,
+    currentUserRole: Role,
+  ): Promise<void> {
+    const request = await this.requestsRepository.findOne({
+      where: { id },
+      relations: ['sender'],
+    });
+
+    if (!request) {
+      throw new NotFoundException('Заявка не найдена');
+    }
+
+    const isAdmin = currentUserRole === Role.Admin;
+
+    if (!isAdmin && request.sender.id !== currentUserId) {
+      throw new ForbiddenException('Можно удалять только исходящие заявки');
+    }
+
+    await this.requestsRepository.delete(id);
   }
 }

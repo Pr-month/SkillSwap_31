@@ -8,6 +8,9 @@ import {
   UseGuards,
   Param,
   ParseUUIDPipe,
+  Delete,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import { RequestsService } from './requests.service';
 import { CreateRequestDto } from './dto/create-request.dto';
@@ -52,5 +55,15 @@ export class RequestsController {
     @Req() req: TRequestWithUser,
   ): Promise<ExchangeRequest> {
     return this.requestsService.updateStatus(id, dto, req.user.id);
+  }
+
+  // DELETE /requests/:id
+  @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async remove(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() req: TRequestWithUser,
+  ): Promise<void> {
+    await this.requestsService.remove(id, req.user.id, req.user.role);
   }
 }
