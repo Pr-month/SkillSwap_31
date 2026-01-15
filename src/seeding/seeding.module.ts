@@ -10,10 +10,11 @@ import { SkillsSeeder } from './skills.seeder';
 import { JwtAccessStrategy } from '../auth/strategies/jwt-access.strategy';
 import { NotificationsGateway } from '../notifications/notifications.gateway';
 import { WsJwtGuard } from '../notifications/guards/ws-jwt.guard';
+import { Skill } from '../skills/entities/skill.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Category, User])
+    TypeOrmModule.forFeature([Category, User, Skill])
   ],
   providers: [AdminSeeder, CategoriesSeeder, SeedCommand, UsersSeeder, SkillsSeeder, JwtAccessStrategy, NotificationsGateway, WsJwtGuard],
   exports: [AdminSeeder, CategoriesSeeder, UsersSeeder, SkillsSeeder],
