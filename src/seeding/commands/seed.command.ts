@@ -2,6 +2,7 @@ import { Command, CommandRunner } from 'nest-commander';
 import { CategoriesSeeder } from '../categories.seeder';
 import { UsersSeeder } from '../users.seeder';
 import { AdminSeeder } from '../admin.seeder';
+import { SkillsSeeder } from '../skills.seeder';
 
 @Command({ 
   name: 'seed', 
@@ -13,7 +14,8 @@ export class SeedCommand extends CommandRunner {
   constructor(
     private readonly categoriesSeeder: CategoriesSeeder,
     private readonly usersSeeder: UsersSeeder,
-    private readonly adminSeeder: AdminSeeder
+    private readonly adminSeeder: AdminSeeder,
+    private readonly skillsSeeder: SkillsSeeder
   ) {
     super();
   }
@@ -27,12 +29,14 @@ export class SeedCommand extends CommandRunner {
         await this.categoriesSeeder.seed();
         await this.usersSeeder.seed();
         await this.adminSeeder.seed();
+        await this.skillsSeeder.seed();
         console.log('Сидинг завершен успешно!');
         break;
       case 'clear':
         console.log('Очистка всех данных...');
         await this.usersSeeder.clear();
         await this.categoriesSeeder.clear();
+        await this.skillsSeeder.clear();
         console.log('Очистка завершена успешно!');
         break;
       default:
